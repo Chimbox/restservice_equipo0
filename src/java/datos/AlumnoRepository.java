@@ -13,4 +13,11 @@ class AlumnoRepository extends RepositoryBase<Alumno>{
         super(entityManager, cls);
     }
     
+    
+    public Alumno find(String matricula) {
+        Alumno alumno =(Alumno) this.entityManager.createQuery("SELECT p FROM " + cls.getName() + " p WHERE p.matricula=:matricula")
+                .setParameter("matricula", matricula)
+                .getSingleResult();
+        return alumno;
+    }
 }
