@@ -4,6 +4,7 @@ import entities.EntityBase;
 import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
+import javax.persistence.OptimisticLockException;
 
 abstract class RepositoryBase<T extends EntityBase> implements Repository<T> {
 
@@ -14,18 +15,16 @@ abstract class RepositoryBase<T extends EntityBase> implements Repository<T> {
         this.entityManager = entityManager;
         this.cls = cls;
     }
-    
+
     @Override
     public T find(int id) {
         T entity = this.entityManager.find(cls, id);
         return entity;
     }
-    
+
     @Override
-    public List<T> findAll(){
-        List lst= this.entityManager.createQuery("SELECT p FROM "+cls.getName()+" p").getResultList();
-        
-        
+    public List<T> findAll() {
+        List lst = this.entityManager.createQuery("SELECT p FROM " + cls.getName() + " p").getResultList();
         System.out.println(lst.size());
         return lst;
     }
@@ -35,16 +34,26 @@ abstract class RepositoryBase<T extends EntityBase> implements Repository<T> {
         this.ensureTransaction();
         if (entity.getId() == null) {
             this.entityManager.persist(entity);
+            commit();
             return entity;
         } else {
-            return this.entityManager.merge(entity);
+            T obj = this.entityManager.merge(entity);
+            commit();
+            return obj;
         }
+
     }
 
     @Override
-    public void delete(T entity) {
+    public void delete(int id) {
         this.ensureTransaction();
-        this.entityManager.remove(entity);
+        int isSuccessful = entityManager.createQuery("delete from Alumno p where p.id=:id")
+                .setParameter("id", id)
+                .executeUpdate();
+        commit();
+        if (isSuccessful == 0) {
+            throw new OptimisticLockException("Ocurrió un error al eliminar.");
+        }
     }
 
     @Override
@@ -54,7 +63,7 @@ abstract class RepositoryBase<T extends EntityBase> implements Repository<T> {
             transaction.commit();
         }
     }
-    
+
     protected void ensureTransaction() {
         EntityTransaction transaction = this.entityManager.getTransaction();
         if (!transaction.isActive()) {

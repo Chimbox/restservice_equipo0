@@ -19,9 +19,10 @@ public class FabricaDatos {
 
     public static IDatos getFachada() {
         if (datos == null) {
+            EntityManager em;
             EntityManagerFactory managerFactory
                     = Persistence.createEntityManagerFactory("RESTService_Equipo0PU");
-            EntityManager em = managerFactory.createEntityManager();
+            em = managerFactory.createEntityManager();
             datos = new FDatos(em);
         }
         return datos;
